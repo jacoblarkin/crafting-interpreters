@@ -92,10 +92,10 @@ proc match(scanner: Scanner, expected: char): bool =
   inc scanner.current
   return true
 
-proc peek(scanner: Scanner): char =
+func peek(scanner: Scanner): char =
   return if isAtEnd scanner: '\0' else: scanner.source[scanner.current]
 
-proc peekNext(scanner: Scanner): char =
+func peekNext(scanner: Scanner): char =
   return if scanner.current+1 >= len scanner.source: '\0'
          else: scanner.source[scanner.current+1]
 

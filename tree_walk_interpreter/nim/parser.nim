@@ -1,5 +1,7 @@
 import error
+import sequtils
 import scanner
+import sugar
 
 type
   Expr* = ref object of RootObj
@@ -12,6 +14,7 @@ type
     right: Expr
   LiteralExpr*[T] = ref object of Expr
     value: T
+  NilExpr* = ref object of Expr
   Grouping* = ref object of Expr
     expression: Expr
 
@@ -20,6 +23,55 @@ type
   Parser = ref object
     current: int
     tokens: seq[Token]
+
+var spaces: int = 0
+
+method toString*(expression: Expr): string =
+  return "Expr\n"
+
+method toString*(expression: BinaryExpr): string =
+  result = "BinaryExpr (op: " & expression.operator.lexeme & ")\n"
+  spaces += 2
+  var s = 0
+  while s < spaces:
+    result &= " "
+    inc s
+  result &= expression.left.toString & "\n"
+  s = 0
+  while s < spaces:
+    result &= " "
+    inc s
+  result &= expression.right.toString
+  spaces -= 2
+
+method toString*(expression: UnaryExpr): string =
+  result = "UnaryExpr (op: " & expression.operator.lexeme & ")\n"
+  spaces += 2
+  var s = 0
+  while s < spaces:
+    result &= " "
+    inc s
+  result &= expression.right.toString
+  spaces -= 2
+
+method toString*(expression: NilExpr): string =
+  return "NIL"
+
+method toString*[T: string | float | bool](expression: LiteralExpr[T]): string =
+  return "LiteralExpr (value: " & $expression.value & ")"
+
+method toString*(expression: Grouping): string =
+  result = "Grouping\n"
+  spaces += 2
+  var s = 0
+  while s < spaces:
+    result &= " "
+    inc s
+  result &= expression.expression.toString
+  spaces -= 2
+
+func `$`*(expression: Expr): string =
+  return toString expression
 
 func previous(parser: Parser): Token =
   return parser.tokens[parser.current - 1]
@@ -39,11 +91,26 @@ func check(parser: Parser, ttype: TokenType): bool =
   return if isAtEnd parser: false else: parser.peek.ttype == ttype
 
 proc match(parser: Parser, ttypes: varargs[TokenType]): bool =
-  for ttype in ttypes:
-    if parser.check ttype:
-      discard advance parser
-      return true
-  return false
+  let matched = ttypes.toSeq.any(x => parser.check(x))
+  if matched: discard advance parser
+  return matched
+
+proc synchronize(parser: Parser) =
+  discard advance parser
+  while not isAtEnd parser:
+    if parser.previous.ttype == TokenType.SEMICOLON: return
+    case parser.peek.ttype:
+      of TokenType.CLASS,
+         TokenType.FUN,
+         TokenType.VAR,
+         TokenType.FOR,
+         TokenType.IF,
+         TokenType.WHILE,
+         TokenType.PRINT,
+         TokenType.RETURN:
+        return
+      else:
+        discard advance parser
 
 proc parseError(token: Token, message: string): ref ParseError =
   if token.ttype == TokenType.EOF:
@@ -64,7 +131,7 @@ proc expression(parser: Parser): Expr
 proc primary(parser: Parser): Expr =
   if parser.match(TokenType.FALSE, TokenType.TRUE):
     return LiteralExpr[bool](value: parser.previous.bool_literal)
-  if parser.match(TokenType.NIL): return LiteralExpr[nil](value: nil)
+  if parser.match(TokenType.NIL): return NilExpr()
   if parser.match(TokenType.NUMBER):
     return LiteralExpr[float](value: parser.previous.number_literal)
   if parser.match(TokenType.STRING):
@@ -98,6 +165,9 @@ parseBinaryExpr(equality, comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUA
 proc expression(parser: Parser): Expr =
   return equality parser
 
-proc parse(tokens: seq[Token]): Expr =
+proc parse*(tokens: seq[Token]): Expr =
   var parser = Parser(current: 0, tokens: tokens)
-  return expression parser
+  try:
+    return expression parser
+  except ParseError:
+    return nil

@@ -3,18 +3,13 @@ import os
 import parser
 import scanner
 
-var hadError = false
-
-proc report(line: int, where: string, message: string) =
-  stderr.write "[line ", line, "] Error", where, ": ", message
-  hadError = true
-
-proc error(line: int, message: string) =
-  report line, "", message
-
 proc run(contents: string) =
-  for tok in scanTokens contents:
+  let tokens = scanTokens contents
+  for tok in tokens:
     echo $tok
+  let expr = parse tokens
+  if hadError: return
+  echo $expr
 
 proc runFile(filename: string) =
   run filename.readFile

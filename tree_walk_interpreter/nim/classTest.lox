@@ -1,0 +1,105 @@
+class Bagel {}
+var bagel = Bagel();
+print bagel; // Prints "Bagel instance".
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat(); // Prints "Crunch crunch crunch!".
+
+class Thing {
+  getCallback() {
+    fun localFunction() {
+      print this;
+    }
+
+    return localFunction;
+  }
+}
+
+var callback = Thing().getCallback();
+callback();
+
+class Foo {
+  init() {
+    print this;
+  }
+}
+
+var foo = Foo();
+print foo.init();
+
+class Foo {
+  init() {
+    return;
+  }
+}
+
+class Math {
+  class square(n) {
+    return n * n;
+  }
+}
+
+print Math.square(3); // Prints "9".
+
+class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  area {
+    return 3.141592653 * this.radius * this.radius;
+  }
+}
+
+var circle = Circle(4);
+print circle.area; // Prints roughly "50.2655".
+
+class Doughnut {
+  cook() {
+    print "Fry until golden brown.";
+  }
+
+  temp {
+    return 165;
+  }
+
+  class yum() {
+    print "Doughnuts are yummy!";
+  }
+}
+
+class BostonCream < Doughnut {
+  cook() {
+    super.cook();
+    print "Pipe full of custard and coat with chocolate.";
+  }
+}
+
+BostonCream().cook();
+print BostonCream().temp;
+BostonCream.yum();
+
+class A {
+  method() {
+    print "A method";
+  }
+}
+
+class B < A {
+  method() {
+    print "B method";
+  }
+
+  test() {
+    super.method();
+  }
+}
+
+class C < B {}
+
+C().test();

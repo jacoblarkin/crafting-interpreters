@@ -1,3 +1,4 @@
+import interpreter
 import error
 import os
 import parser
@@ -7,9 +8,18 @@ proc run(contents: string) =
   let tokens = scanTokens contents
   for tok in tokens:
     echo $tok
-  let expr = parse tokens
+  let statements = parse tokens
   if hadError: return
-  echo $expr
+  for statement in statements:
+    echo $statement
+  initInterpreter()
+  resolve statements
+  if hadError: return
+  for statement in statements:
+    try:
+      execute statement
+    except RuntimeError:
+      echo "Runtime Error: " & getCurrentExceptionMsg()
 
 proc runFile(filename: string) =
   run filename.readFile

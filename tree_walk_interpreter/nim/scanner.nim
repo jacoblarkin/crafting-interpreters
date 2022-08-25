@@ -1,4 +1,5 @@
 import error
+import hashes
 import parseutils
 import strutils
 import tables
@@ -21,8 +22,8 @@ type
     of STRING: string_literal*: string
     of NUMBER: number_literal*: float
     of TRUE, FALSE: bool_literal*: bool
-    else: literal*: void
- 
+    else: discard
+
   Scanner = ref object
     current: int
     start: int
@@ -71,12 +72,15 @@ const
               "var": TokenType.VAR,
               "while": TokenType.WHILE}.toTable
 
+proc hash*(token: Token): Hash =
+  return !$(hash(token.lexeme) !& hash(token.line))
+
 func `$`*(t: Token): string =
   let literal: string = case t.ttype:
-      of TokenType.STRING: t.string_literal
-      of TokenType.NUMBER: $t.number_literal
-      of TokenType.TRUE, TokenType.FALSE: $t.bool_literal
-      else: ""
+    of TokenType.STRING: t.string_literal
+    of TokenType.NUMBER: $t.number_literal
+    of TokenType.TRUE, TokenType.FALSE: $t.bool_literal
+    else: ""
   return $t.ttype & " " & t.lexeme & " " & literal
 
 func isAtEnd(scanner: Scanner): bool =
@@ -104,15 +108,19 @@ func makeToken[T](scanner: Scanner, ttype: TokenType, literal: T): Token =
   let line = scanner.line
   when T is float:
     if ttype == TokenType.NUMBER:
-      return Token(lexeme: lexeme, line: line, ttype: TokenType.NUMBER, number_literal: literal)
+      return Token(lexeme: lexeme, line: line, ttype: TokenType.NUMBER,
+          number_literal: literal)
   elif T is string:
     if ttype == TokenType.STRING:
-      return Token(lexeme: lexeme, line: line, ttype: TokenType.STRING, string_literal: literal)
+      return Token(lexeme: lexeme, line: line, ttype: TokenType.STRING,
+          string_literal: literal)
   elif T is bool:
     if ttype == TokenType.TRUE:
-      return Token(lexeme: lexeme, line: line, ttype: TokenType.TRUE, bool_literal: literal)
+      return Token(lexeme: lexeme, line: line, ttype: TokenType.TRUE,
+          bool_literal: literal)
     elif ttype == TokenType.FALSE:
-      return Token(lexeme: lexeme, line: line, ttype: TokenType.FALSE, bool_literal: literal)
+      return Token(lexeme: lexeme, line: line, ttype: TokenType.FALSE,
+          bool_literal: literal)
   return Token(lexeme: lexeme, line: line, ttype: ttype)
 
 func makeToken(scanner: Scanner, ttype: TokenType): Token =
@@ -124,7 +132,8 @@ proc scanString(scanner: Scanner): Token =
     discard advance scanner
   if not isAtEnd scanner:
     discard advance scanner
-    return makeToken(scanner, TokenType.STRING, scanner.source[scanner.start+1 ..< scanner.current-1])
+    return makeToken(scanner, TokenType.STRING, scanner.source[
+        scanner.start+1 ..< scanner.current-1])
   error scanner.line, "Unterminated string"
   return Token(lexeme: "", line: scanner.line, ttype: TokenType.EOF)
 
@@ -139,9 +148,9 @@ proc scanNumber(scanner: Scanner, foundDecPt: bool = false): Token =
   discard parseFloat(scanner.source[scanner.start ..< scanner.current], val)
   return makeToken(scanner, TokenType.NUMBER, val)
 
-               
+
 proc scanToken(scanner: Scanner): Token =
-  var c:  char = advance scanner
+  var c: char = advance scanner
   var dc: string = if not isAtEnd scanner:
                      scanner.source[scanner.start .. scanner.current]
                    else:

@@ -420,6 +420,8 @@ method evaluate*(expression: SuperExpr): LoxValue =
   let calledMethod = superclass.lclass.findMethod(expression.calledMethod.lexeme)
   if calledMethod == nil:
     raise newException(RuntimeError, "Undefined property '" & expression.calledMethod.lexeme & "'.")
+  if superclass.lclass.isAttr(calledMethod.name):
+    return calledMethod.bindTo(instance.linstance).call(@[])
   return LoxValue(valType: LoxCallable, callable: calledMethod.bindTo(instance.linstance))
 
 method execute*(statement: PrintStmt) =

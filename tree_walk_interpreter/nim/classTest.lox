@@ -78,6 +78,10 @@ class BostonCream < Doughnut {
     super.cook();
     print "Pipe full of custard and coat with chocolate.";
   }
+
+  temp {
+    return super.temp + 3;
+  }
 }
 
 BostonCream().cook();

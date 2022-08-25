@@ -91,7 +91,7 @@ type
 var spaces: int = 0
 
 method hash*(expression: Expr): Hash {.base.} =
-  return 0
+  raise newException(Defect, "Cannot has this expression type: " & $Expr)
 
 method hash*(expression: VariableExpr): Hash =
   return hash(expression.name)
@@ -517,13 +517,6 @@ proc call(parser: Parser): Expr =
         result = GetExpr(obj: result, name: name)
       else:
         raise parseError(parser.previous, "Should never reach this point!!!")
-    #if parser.match(TokenType.LEFT_PAREN):
-    #  result = parser.finishCall(result)
-    #elif parser.match(TokenType.DOT):
-    #  let name = parser.consume(TokenType.IDENTIFIER, "Expect property name after '.'.")
-    #  result = GetExpr(obj: result, name: name)
-    #else:
-    #  return
 
 proc unary(parser: Parser): Expr =
   if parser.match(TokenType.BANG, TokenType.MINUS):

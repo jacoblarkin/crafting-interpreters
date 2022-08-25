@@ -414,6 +414,9 @@ method evaluate*(expression: SuperExpr): LoxValue =
   let superclass = currentEnvironment.getAt(distance, "super")
   if superclass.valType != LoxClass:
     raise newException(RuntimeError, "Super is not a class???")
+  let calledClassMethod = superclass.lclass.klass.findMethod(expression.calledMethod.lexeme)
+  if calledClassMethod != nil:
+    return LoxValue(valType: LoxCallable, callable: calledClassMethod)
   let instance = currentEnvironment.getAt(distance - 1, "this")
   if instance.valType != LoxInstance:
     raise newException(RuntimeError, "This is not an instance???")
@@ -647,11 +650,10 @@ method resolve(statement: ClassDecl) =
     currentClass = ClassType.SUBCLASS
     resolve statement.superclass
     beginScope()
-#    defer: endScope()
     scopes[^1]["super"] = true
+  beginScope()
   for thisMethod in statement.classMethods:
     resolveFunction(thisMethod, METHOD)
-  beginScope()
   scopes[^1]["this"] = true
   for thisMethod in statement.methods:
     let declaration = if thisMethod.name.lexeme ==

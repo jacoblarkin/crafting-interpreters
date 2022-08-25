@@ -82,6 +82,11 @@ class BostonCream < Doughnut {
   temp {
     return super.temp + 3;
   }
+
+  class yum() {
+    super.yum();
+    print "Boston cream especially!";
+  }
 }
 
 BostonCream().cook();

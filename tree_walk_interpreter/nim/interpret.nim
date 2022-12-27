@@ -15,10 +15,10 @@ proc run(contents: string) =
   initInterpreter()
   resolve statements
   if hadError: return
-  for statement in statements:
-    try:
+  try:
+    for statement in statements:
       execute statement
-    except RuntimeError:
+  except RuntimeError:
       echo "Runtime Error: " & getCurrentExceptionMsg()
 
 proc runFile(filename: string) =

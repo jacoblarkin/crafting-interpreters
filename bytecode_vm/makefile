@@ -1,6 +1,7 @@
+#CC = /opt/homebrew/bin/gcc-12
 CC = clang
-CFLAGS = -Wall -Wextra -Wpedantic -Wconversion -Werror -std=c2x
-LFLAGS = -L.
+CFLAGS = -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror -std=c2x -O3 -pg -g
+LFLAGS = -L. -pg
 
 INCLUDES =
 LIBS = 

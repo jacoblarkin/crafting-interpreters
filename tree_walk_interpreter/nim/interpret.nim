@@ -19,7 +19,7 @@ proc run(contents: string) =
     for statement in statements:
       execute statement
   except RuntimeError:
-      echo "Runtime Error: " & getCurrentExceptionMsg()
+    echo "Runtime Error: " & getCurrentExceptionMsg()
 
 proc runFile(filename: string) =
   run filename.readFile

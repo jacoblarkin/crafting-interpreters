@@ -671,7 +671,8 @@ proc classDeclaration(parser: Parser): Stmt =
     else:
       attrs.add(Function(function(parser, "getAttr")))
   discard parser.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
-  return ClassDecl(name: name, superclass: superclass, methods: methods, classMethods: classMethods, attrs: attrs)
+  return ClassDecl(name: name, superclass: superclass, methods: methods,
+      classMethods: classMethods, attrs: attrs)
 
 proc declaration(parser: Parser): Stmt =
   try:

@@ -1,7 +1,9 @@
-CC = /opt/homebrew/bin/gcc-12
+CC = /opt/homebrew/bin/gcc-13
 #CC = clang
 #CFLAGS = -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror -std=c2x -O3 -pg -g
-CFLAGS = -Wall -Wextra -Wconversion -Wshadow -Werror -std=gnu2x -O3 -g -fanalyzer
+#CFLAGS = -Wall -Wextra -Wconversion -Wshadow -Werror -std=gnu2x -O3 -g -fanalyzer
+CFLAGS = -Wall -Wextra -Wconversion -Wshadow -std=gnu2x -O3 -g -fanalyzer
+#CFLAGS = -Wall -Wextra -Wconversion -Wshadow -Werror -std=gnu2x -O3 -g -pg
 #LFLAGS = -L. -pg
 LFLAGS = -L.
 

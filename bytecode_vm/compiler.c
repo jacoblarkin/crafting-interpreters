@@ -573,10 +573,15 @@ static void unary([[maybe_unused]] bool canAssign) {
 static void ternary([[maybe_unused]] bool canAssign) {
   TokenType operatorType = parser.previous.type;
   ParseRule* rule = getRule(operatorType);
-  emitByte(OP_TERNARY);
+  int thenJump = emitJump(OP_JUMP_IF_FALSE);
+  emitByte(OP_POP);
   expression();
   consume(TOKEN_COLON, "Expect ':' after middle expression in ternary.");
+  int elseJump = emitJump(OP_JUMP);
+  patchJump(thenJump);
+  emitByte(OP_POP);
   parsePrecedence((Precedence)(rule->precedence + 1)); 
+  patchJump(elseJump);
 }
 
 ParseRule rules[] = {

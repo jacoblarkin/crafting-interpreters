@@ -174,7 +174,7 @@ template LoxValueApplicativePartial(checkedType, returnedType, valName,
     let callable = LoxCallableImpl(call: actualFn, arity: 1)
     return LoxValue(valType: LoxCallable, callable: callable)
 
-func `<$>`[T: float | string | bool, R: float | string | bool](fn: (T) -> R,
+proc `<$>`[T: float | string | bool, R: float | string | bool](fn: (T) -> R,
     value: LoxValue): LoxValue =
   when T is float and R is float:
     LoxValueFunctorImpl(LoxNumber, LoxNumber, lnumber, lnumber)
@@ -187,7 +187,7 @@ func `<$>`[T: float | string | bool, R: float | string | bool](fn: (T) -> R,
   raise newException(RuntimeError, "(single <$>) Expected value of type " & $T &
       ", but got " & $value.valType)
 
-func `<$>`[T: float | string | bool, R: float | string | bool](fn: (T, T) -> R,
+proc `<$>`[T: float | string | bool, R: float | string | bool](fn: (T, T) -> R,
     value: LoxValue): LoxValue =
   when T is float and R is float:
     LoxValueApplicativePartial(LoxNumber, LoxNumber, lnumber, lnumber)
@@ -205,7 +205,7 @@ proc `<*>`(fn: LoxValue, value: LoxValue): LoxValue =
     raise newException(RuntimeError, "Using `<*>` on a non-callable LoxValue.")
   return fn.callable.call(@[value])
 
-method evaluate*(expression: Expr): LoxValue {.base, locks: "unknown".} =
+method evaluate*(expression: Expr): LoxValue {.base.} =
   raise newException(RuntimeError, "Unrecognized expression type\n" & $expression)
 
 method evaluate*(expression: LiteralExpr): LoxValue =
@@ -414,18 +414,22 @@ method evaluate*(expression: SuperExpr): LoxValue =
   let superclass = currentEnvironment.getAt(distance, "super")
   if superclass.valType != LoxClass:
     raise newException(RuntimeError, "Super is not a class???")
-  let calledClassMethod = superclass.lclass.klass.findMethod(expression.calledMethod.lexeme)
+  let calledClassMethod = superclass.lclass.klass.findMethod(
+      expression.calledMethod.lexeme)
   if calledClassMethod != nil:
     return LoxValue(valType: LoxCallable, callable: calledClassMethod)
   let instance = currentEnvironment.getAt(distance - 1, "this")
   if instance.valType != LoxInstance:
     raise newException(RuntimeError, "This is not an instance???")
-  let calledMethod = superclass.lclass.findMethod(expression.calledMethod.lexeme)
+  let calledMethod = superclass.lclass.findMethod(
+      expression.calledMethod.lexeme)
   if calledMethod == nil:
-    raise newException(RuntimeError, "Undefined property '" & expression.calledMethod.lexeme & "'.")
+    raise newException(RuntimeError, "Undefined property '" &
+        expression.calledMethod.lexeme & "'.")
   if superclass.lclass.isAttr(calledMethod.name):
     return calledMethod.bindTo(instance.linstance).call(@[])
-  return LoxValue(valType: LoxCallable, callable: calledMethod.bindTo(instance.linstance))
+  return LoxValue(valType: LoxCallable, callable: calledMethod.bindTo(
+      instance.linstance))
 
 method execute*(statement: PrintStmt) =
   echo statement.expression.evaluate
@@ -495,7 +499,8 @@ proc callClass*(klass: LoxClassImpl, arguments: seq[LoxValue]): LoxValue =
   return LoxValue(valType: LoxInstance, linstance: instance)
 
 method execute*(statement: ClassDecl) =
-  let superclass = if statement.superclass == nil: nilValue else: evaluate(statement.superclass)
+  let superclass = if statement.superclass == nil: nilValue else: evaluate(
+      statement.superclass)
   if superclass.valType != LoxNil and superclass.valType != LoxClass:
     raise newException(RuntimeError, "Superclass must be a class.")
   currentEnvironment.define(statement.name.lexeme, nilValue)
@@ -511,7 +516,8 @@ method execute*(statement: ClassDecl) =
     let isInitializer = thisMethod.name.lexeme == "init"
     let callable = LoxCallableImpl(
       call: (args: seq[LoxValue])=>callFn(newMethod, args, closure,
-          isInitializer), arity: thisMethod.params.len, name: thisMethod.name.lexeme,
+          isInitializer), arity: thisMethod.params.len,
+          name: thisMethod.name.lexeme,
           closure: closure, declaration: newMethod,
               isInitializer: newMethod.name.lexeme == "init")
     methods[thisMethod.name.lexeme] = callable
@@ -527,11 +533,13 @@ method execute*(statement: ClassDecl) =
     let isInitializer = thisMethod.name.lexeme == "init"
     let callable = LoxCallableImpl(
       call: (args: seq[LoxValue])=>callFn(newMethod, args, closure,
-          isInitializer), arity: thisMethod.params.len, name: thisMethod.name.lexeme,
+          isInitializer), arity: thisMethod.params.len,
+          name: thisMethod.name.lexeme,
           closure: closure, declaration: newMethod,
               isInitializer: newMethod.name.lexeme == "init")
     attrs[thisMethod.name.lexeme] = callable
-  let superclassImpl = if superclass.valType == LoxClass: superclass.lclass else: nil
+  let superclassImpl = if superclass.valType ==
+      LoxClass: superclass.lclass else: nil
   let supermetaclass = if superclassImpl == nil: nil else: superclassImpl.klass
   let metaClass = LoxClassImpl(name: "MetaClass[" & statement.name.lexeme & "]",
     superclass: supermetaclass,
@@ -717,5 +725,7 @@ method resolve(expression: SuperExpr) =
   expression.resolveLocal(expression.keyword)
 
 proc initInterpreter*() =
+  globals = Environment(values: initTable[string, LoxValue](), enclosing: nil)
   globals.define("clock", LoxValue(valType: LoxCallable, callable: clockFn))
+  currentEnvironment = globals
 
